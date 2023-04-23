@@ -1,52 +1,17 @@
 import gradio as gr
-
-import asyncio, httpx
-import async_timeout
-
-from typing import Optional, List
-from pydantic import BaseModel
+import openai
 
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-API_KEY = os.getenv("OPENAI_API_KEY")
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
-class Message(BaseModel):
-    role: str
-    content: str
-
-
-async def make_completion(
-    messages: List[Message], nb_retries: int = 3, delay: int = 30
-) -> Optional[str]:
-    """
-    Sends a request to the ChatGPT API to retrieve a response based on a list of previous messages.
-    """
-    header = {"Content-Type": "application/json", "Authorization": f"Bearer {API_KEY}"}
-    try:
-        async with async_timeout.timeout(delay=delay):
-            async with httpx.AsyncClient(headers=header) as aio_client:
-                counter = 0
-                keep_loop = True
-                while keep_loop:
-                    try:
-                        resp = await aio_client.post(
-                            url="https://api.openai.com/v1/chat/completions",
-                            json={"model": "gpt-3.5-turbo", "messages": messages},
-                        )
-                        if resp.status_code == 200:
-                            return resp.json()["choices"][0]["message"]["content"]
-                        else:
-                            keep_loop = False
-                    except Exception as e:
-                        counter = counter + 1
-                        keep_loop = counter < nb_retries
-    except asyncio.TimeoutError as e:
-        logger.error(f"Timeout {delay} seconds !")
-    return None
+async def make_completion(history):
+    completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=history)
+    return completion.choices[0].message.content
 
 
 async def predict(input, history):
@@ -76,15 +41,15 @@ Gradio Blocks low-level API that allows to create custom web applications (here 
 with gr.Blocks() as demo:
     gr.Markdown(
         """
-        <h1><center>家用ChatGPT</center></h1>
+        <h1><center>家用聊天机器人</center></h1>
         """
     )
     chatbot = gr.Chatbot(label="ChatGPT")
     state = gr.State([])
     txt = gr.Textbox(show_label=False, placeholder="输入你的问题")
     submit = gr.Button("发送")
-    txt.submit(predict, [txt, state], [chatbot, state], lambda x: gr.update(value=""))
-    submit.click(predict, [txt, state], [chatbot, state], lambda x: gr.update(value=""))
+    txt.submit(predict, [txt, state], [chatbot, state])
+    submit.click(predict, [txt, state], [chatbot, state])
 
 demo.launch(server_port=8080, server_name="0.0.0.0")
 # demo.launch(server_port=8080)
