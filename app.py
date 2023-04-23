@@ -86,5 +86,5 @@ with gr.Blocks() as demo:
     txt.submit(predict, [txt, state], [chatbot, state], lambda x: gr.update(value=""))
     submit.click(predict, [txt, state], [chatbot, state], lambda x: gr.update(value=""))
 
-# demo.launch(server_port=8080, server_name="0,0,0,0")
-demo.launch(server_port=8080)
+demo.launch(server_port=8080, server_name="0.0.0.0")
+# demo.launch(server_port=8080)
