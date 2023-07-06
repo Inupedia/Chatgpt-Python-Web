@@ -10,7 +10,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
 async def make_completion(history):
-    completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=history)
+    completion = openai.ChatCompletion.create(model="gpt-4", messages=history)
     return completion.choices[0].message.content
 
 
